@@ -16,6 +16,8 @@ class OrdersController < ApplicationController
         product_list.quantity = cart_item.quantity
         product_list.save
       end
+      current_cart.clean!
+      OrderMailer.notify_order_placed(@order).deliver!
       redirect_to order_path(@order.token)
     else
       render 'cart/checkout'
@@ -25,6 +27,22 @@ class OrdersController < ApplicationController
   def show
     @order = Order.find_by_token(params[:id])
     @product_lists = @order.product_lists
+  end
+
+  def pay_with_alipay
+    @order = Order.find_by_token(params[:id])
+    @order.set_payment_with!('alipay')
+    @order.pay!
+
+    redirect_to order_path(@order.token), notice: 'Pay with Alipay successfully!'
+  end
+
+  def pay_with_wechat
+    @order = Order.find_by_token(params[:id])
+    @order.set_payment_with!('wechat')
+    @order.pay!
+
+    redirect_to order_path(@order.token), notice: 'Pay with wechat successfully'
   end
 
   private
